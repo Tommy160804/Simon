@@ -1,3 +1,11 @@
 <resources>
     <string name="app_name">Simon</string>
+    <string name="cancella">CANCELLA</string>
+    <string name="fine_partita">FINE PARTITA</string>
+    <string name="r">R</string>
+    <string name="g">G</string>
+    <string name="b">B</string>
+    <string name="m">M</string>
+    <string name="y">Y</string>
+    <string name="c">C</string>
 </resources>
