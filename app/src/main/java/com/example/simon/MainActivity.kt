@@ -150,7 +150,7 @@ fun MainScreen(modifier: Modifier = Modifier, onNavigateToSecondScreen: () -> Un
             }
         }
 
-        // Spinge sotto tutto ciò che si trova dopo queste righe di codice, cioè il bottone cancella e fine partita
+        // spinge sotto tutto ciò che si trova dopo queste righe di codice, cioè il bottone cancella e fine partita
         Spacer(modifier = Modifier.weight(1f))
 
         // Area Pulsanti Cancella e Fine Partita
