@@ -8,4 +8,7 @@
     <string name="m">M</string>
     <string name="y">Y</string>
     <string name="c">C</string>
+    <string name="sequenza">Hai completato la sequenza</string>
+    <string name="dati_salvati">Dati salvati: %1$s</string>
+    <string name="riprova">RIPROVA</string>
 </resources>
