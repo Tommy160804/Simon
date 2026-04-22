@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -21,20 +22,23 @@ class MainActivity : ComponentActivity() {
         setContent {
             SimonTheme {
                 var currentScreen by rememberSaveable { mutableStateOf(1) }
-                var savedSequence by rememberSaveable { mutableStateOf("") }
+
+                // Memorizza la lista di tutte le sequenze giocate
+                val matchesHistory = rememberSaveable { mutableStateListOf<String>() }
 
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
                         1 -> MainScreen(
                             modifier = Modifier.padding(innerPadding),
-                            onNavigateToSecondScreen = { sequenza ->
-                                savedSequence = sequenza
+                            onNavigateToSecondScreen = { nuovaSequenza ->
+                                // Aggiunge la partita appena finita alla lista (anche se vuota)
+                                matchesHistory.add(nuovaSequenza)
                                 currentScreen = 2
                             }
                         )
                         2 -> SecondScreen(
                             modifier = Modifier.padding(innerPadding),
-                            sequenza = savedSequence,
+                            partite = matchesHistory, // Passa tutta la cronologia al secondScreen
                             onBack = { currentScreen = 1 }
                         )
                     }

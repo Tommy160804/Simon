@@ -11,4 +11,8 @@
     <string name="sequenza">Hai completato la sequenza</string>
     <string name="dati_salvati">Dati salvati: %1$s</string>
     <string name="riprova">RIPROVA</string>
+    <string name="partite_concluse">PARTITE CONCLUSE</string>
+    <string name="nuova_sequenza">NUOVA SEQUENZA</string>
+    <string name="punti">Punti: %d</string>
+    <string name="nessun_rettangolo">Nessun Rettangolo</string>
 </resources>

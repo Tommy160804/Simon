@@ -7,4 +7,7 @@
     <color name="yellow">#FFFF00</color>
     <color name="cyan">#00FFFF</color>
     <color name="gray">#D3D3D3</color>
+    <color name="dark_gray">#444444</color>
+    <color name="gray1">#888888</color>
+    <color name="white1">#FFFFFF</color>
 </resources>

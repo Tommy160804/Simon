@@ -7,12 +7,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -25,13 +23,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
@@ -42,15 +38,16 @@ import android.content.res.Configuration
 import androidx.compose.ui.graphics.toArgb
 
 @Composable
-fun MainScreen(
-    modifier: Modifier = Modifier,
-    onNavigateToSecondScreen: (String) -> Unit
+fun MainScreen(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String) -> Unit
 ) {
     val colors = listOf(colorResource(id = R.color.red), colorResource(id = R.color.green), colorResource(id = R.color.blue), colorResource(id = R.color.magenta), colorResource(id = R.color.yellow), colorResource(id = R.color.cyan))
     val colorNames = listOf(stringResource(id = R.string.r), stringResource(id = R.string.g), stringResource(id = R.string.b), stringResource(id = R.string.m), stringResource(id = R.string.y), stringResource(id = R.string.c))
 
     // Colore sfondo iniziale
     val initialColor = colorResource(id = R.color.gray)
+    val textDarkGray = colorResource(id = R.color.dark_gray)
+    val gray11 = colorResource(id = R.color.gray1)
+    val white = colorResource(id = R.color.white1)
 
     /*
     * rememberSaveable non funziona con Color in quanto non è un tipo primitivo; perciò trasformo il colore in un Int
@@ -79,7 +76,7 @@ fun MainScreen(
             modifier = boxModifier
                 // Padding necessario affinché la box non sia attaccata al bordo del telefono
                 .padding(16.dp)
-                .border(2.dp, Color.Black, RoundedCornerShape(8.dp))
+                .border(2.dp, textDarkGray, RoundedCornerShape(8.dp))
                 .background(initialColor, RoundedCornerShape(8.dp))
                 // Padding necessario affinché le lettere non siano attaccate al bordo della box
                 .padding(8.dp)
@@ -98,7 +95,7 @@ fun MainScreen(
                 fontSize = 24.sp,
                 // Testo in grassetto
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
+                color = textDarkGray,
                 lineHeight = 30.sp
             )
         }
@@ -116,7 +113,7 @@ fun MainScreen(
         BoxWithConstraints(
             modifier = boxModifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
-                .border(2.dp, Color.Black, RoundedCornerShape(12.dp))
+                .border(2.dp, textDarkGray, RoundedCornerShape(12.dp))
                 // Il colore cambia leggermente al tocco (opacità 0.3)
                 .background(containerColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                 .padding(12.dp)
@@ -146,7 +143,7 @@ fun MainScreen(
                         modifier = Modifier
                             .height(itemHeight)
                             .fillMaxWidth()
-                            .border(1.dp, Color.Black, RoundedCornerShape(20.dp))
+                            .border(1.dp, textDarkGray, RoundedCornerShape(20.dp))
                     ) {
                         Text(
                             text = colorNames[index],
@@ -154,7 +151,7 @@ fun MainScreen(
                             fontWeight = FontWeight.Medium,
                             // La lettera all'interno dei bottoni da schiacciare cambia in base al colore del bottone.
                             // (Ad esempio la lettera "Y" sul giallo se è bianca non si legge praticamente).
-                            color = if (colors[index] == Color.Yellow || colors[index] == Color.Cyan) Color.Black else Color.White
+                            color = if (colors[index] == Color.Yellow || colors[index] == Color.Cyan) textDarkGray else if (colors[index] == Color.Green) white else initialColor
                         )
                     }
                 }
@@ -167,7 +164,7 @@ fun MainScreen(
         Box(
             modifier = boxModifier
                 .padding(16.dp)
-                .border(2.dp, Color.Black, RoundedCornerShape(12.dp))
+                .border(2.dp, textDarkGray, RoundedCornerShape(12.dp))
                 .background(initialColor, RoundedCornerShape(12.dp))
                 .padding(12.dp)
         ) {
@@ -179,16 +176,16 @@ fun MainScreen(
                     onClick = {
                         sequenceText = ""
                         // Ripristino il colore grigio
-                        // android studio dice; "Assigned value never used", ma non è vero; senza questa riga dopo avere premuto 
-                        // "CANCELLA" rimane l'ultimo colore cliccato.q
+                        // android studio dice; "Assigned value never used", ma non è vero; senza questa riga dopo avere premuto
+                        // "CANCELLA" rimane l'ultimo colore cliccato
                         containerColorArgb = initialColor.toArgb()
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                    colors = ButtonDefaults.buttonColors(containerColor = gray11),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp)
-                        .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
+                        .border(1.dp, textDarkGray, RoundedCornerShape(8.dp))
                 ) {
                     Text(text = stringResource(id = R.string.cancella), color = Color.White)
                 }
@@ -199,12 +196,12 @@ fun MainScreen(
                         sequenceText = ""
                         onNavigateToSecondScreen(stringaDaPassare)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = Color.Gray),
+                    colors = ButtonDefaults.buttonColors(containerColor = gray11),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .weight(1f)
                         .height(48.dp)
-                        .border(1.dp, Color.Black, RoundedCornerShape(8.dp))
+                        .border(1.dp, textDarkGray, RoundedCornerShape(8.dp))
                 ) {
                     Text(text = stringResource(id = R.string.fine_partita), color = Color.White)
                 }
