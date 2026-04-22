@@ -79,7 +79,8 @@ fun SecondScreen(modifier: Modifier = Modifier, partite: List<String>, onBack: (
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
             // items crea un componente MatchItem per ogni stringa che si trova nella lista partite
-            items(partite) { sequenza ->
+            // Viene visualizzata la lista in ordine inverso in modo tale da vedere prima sempre le ultime partite giocate
+            items(partite.reversed()) { sequenza ->
                 MatchItem(sequenza)
             }
         }

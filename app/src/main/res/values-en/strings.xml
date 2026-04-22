@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simon</string>
+    <string name="cancella">CLEAR</string>
+    <string name="fine_partita">FINISH MATCH</string>
+    <string name="r">R</string>
+    <string name="g">G</string>
+    <string name="b">B</string>
+    <string name="m">M</string>
+    <string name="y">Y</string>
+    <string name="c">C</string>
+    <string name="dati_salvati">Data saved: %1$s</string>
+    <string name="riprova">RETRY</string>
+    <string name="partite_concluse">COMPLETED MATCHES</string>
+    <string name="nuova_sequenza">NEW SEQUENCE</string>
+    <string name="punti">Score: %d</string>
+    <string name="nessun_rettangolo">No Rectangles</string>
+</resources>

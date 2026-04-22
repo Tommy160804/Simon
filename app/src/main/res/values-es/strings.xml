@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Simon</string>
+    <string name="cancella">BORRAR</string>
+    <string name="fine_partita">FINALIZAR</string>
+    <string name="r">R</string>
+    <string name="g">G</string>
+    <string name="b">B</string>
+    <string name="m">M</string>
+    <string name="y">Y</string>
+    <string name="c">C</string>
+    <string name="dati_salvati">Datos guardados: %1$s</string>
+    <string name="riprova">REINTENTAR</string>
+    <string name="partite_concluse">PARTIDAS FINALIZADAS</string>
+    <string name="nuova_sequenza">NUEVA SECUENCIA</string>
+    <string name="punti">Puntos: %d</string>
+    <string name="nessun_rettangolo">Sin rectángulos</string>
+</resources>

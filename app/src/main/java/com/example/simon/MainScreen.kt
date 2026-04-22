@@ -36,6 +36,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.res.Configuration
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.runtime.mutableIntStateOf
 
 @Composable
 fun MainScreen(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String) -> Unit
@@ -53,7 +54,7 @@ fun MainScreen(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String)
     * rememberSaveable non funziona con Color in quanto non è un tipo primitivo; perciò trasformo il colore in un Int
     * (Dopodiché l'Int lo riconverto in Color durante la Recomposition)
     * */
-    var containerColorArgb by rememberSaveable { mutableStateOf(initialColor.toArgb()) }
+    var containerColorArgb by rememberSaveable { mutableIntStateOf(initialColor.toArgb()) }
     // Trasformo l'Int in un oggetto Color per usarlo nei modifier
     val containerColor = Color(containerColorArgb)
 
