@@ -16,3 +16,4 @@ Altre note;
 - La lista nello schermo 2 è visualizzata in maniera inversa; in modo tale da potere vedere prima le partite più recenti.
 - Per tornare allo schermo 1 si può usare equivalentemente il bottone "Nuova sequenza" oppure il tasto back.
 - Nello schermo 2 è stato usato il componente Card di Material3 per migliorare la grafica della lista.
+- L'icona dell'app è stata creata con l'AI.
