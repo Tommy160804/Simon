@@ -9,7 +9,7 @@ Versione Minima: Android 7.0 (API 24).
 
 
 Altre note;
-- Il progetto è stato interamente realizzato usando Jetpack Comp
+- Il progetto è stato interamente realizzato usando Jetpack Compose
 - L'app funziona sia in modalità portrait che landscape.
 - L'app supporta 4 lingue; italiano, inglese, spagnolo, francese; la lingua del gioco cambia in base alla lingua scelta nelle impostazioni del telefono.
   Nel caso si imposti una lingua diversa da queste 4, verrà usata quella di default, ovvero l'italiano.
