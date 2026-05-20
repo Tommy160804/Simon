@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import android.content.res.Configuration
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.ui.text.style.TextAlign
 
 @Composable
 fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String) -> Unit
@@ -60,6 +61,9 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
     var sequenceText by rememberSaveable { mutableStateOf("") }
     val scrollState = rememberScrollState()
+
+    // Variabile per sapere se la partita è iniziata o meno
+    var isGameStarted by rememberSaveable { mutableStateOf(false) }
 
     // Individuo l'orientamento per decidere la disposizione
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -133,12 +137,20 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 items(6) { index ->
                     Button(
                         onClick = {
-                            // Salvo il colore in un Int così sopravvive alla rotazione
-                            // android studio dice; "Assigned value never used", ma non è vero
-                            containerColorArgb = colors[index].toArgb()
-                            val letter = colorNames[index]
-                            sequenceText = if (sequenceText.isEmpty()) letter else "$sequenceText, $letter"
+                            // I bottoni sono cliccabili solo se lap partita è in corso
+                            // (successivamente dovranno potere essere schiacciati solo quando è il turno del giocatore)
+                            if (isGameStarted) {
+                                // Salvo il colore in un Int così sopravvive alla rotazione
+                                // android studio dice; "Assigned value never used", ma non è vero
+                                containerColorArgb = colors[index].toArgb()
+                                val letter = colorNames[index]
+                                sequenceText = if (sequenceText.isEmpty()) letter else "$sequenceText, $letter"
+                            }
                         },
+
+                        // Pongo enabled = true; cosi i colori della matrice
+                        // rimangono sempre visibili anche se la partita non è avviata
+                        enabled = true,
                         colors = ButtonDefaults.buttonColors(containerColor = colors[index]),
                         shape = RoundedCornerShape(20.dp),
                         modifier = Modifier
@@ -152,7 +164,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                             fontWeight = FontWeight.Medium,
                             // La lettera all'interno dei bottoni da schiacciare cambia in base al colore del bottone.
                             // (Ad esempio la lettera "Y" sul giallo se è bianca non si legge praticamente).
-                            color = if (colors[index] == Color.Yellow || colors[index] == Color.Cyan) textDarkGray else if (colors[index] == Color.Green) white else initialColor
+                            color = if (colors[index] == Color.Yellow || colors[index] == Color.Cyan) textDarkGray else Color.White
                         )
                     }
                 }
@@ -160,7 +172,8 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
         }
     }
 
-    // 3. Box che racchiude i pulsanti Cancella e Fine Partita
+    // 3. Box che racchiude i pulsanti Cancella e Fine Partita (Avvia, Pausa e Fine Partita)
+    // xx Per ora i pulsanti non fanno le cose giuste
     val controlBox = @Composable { boxModifier: Modifier ->
         Box(
             modifier = boxModifier
@@ -175,24 +188,60 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             ) {
                 Button(
                     onClick = {
+                        // Imposto lo stato a true per bloccare il bottone AVVIA PARTITA e sbloccare la matrice di colori
+                        isGameStarted = true
+
                         sequenceText = ""
                         // Ripristino il colore grigio
                         // android studio dice; "Assigned value never used", ma non è vero; senza questa riga dopo avere premuto
                         // "CANCELLA" rimane l'ultimo colore cliccato
                         containerColorArgb = initialColor.toArgb()
                     },
+                    // Il bottone AVVIA PARTITA è attivo solo se la partita NON è ancora iniziata
+                    enabled = !isGameStarted,
                     colors = ButtonDefaults.buttonColors(containerColor = gray11),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
+                        .height(64.dp)
                         .border(1.dp, textDarkGray, RoundedCornerShape(8.dp))
                 ) {
-                    Text(text = stringResource(id = R.string.cancella), color = Color.White)
+                    Text(text = "AVVIA PARTITA",
+                        color = Color.White,
+                        fontWeight = FontWeight.Bold,
+                        // Centra il testo orizzontalmente quando va a capo
+                        textAlign = TextAlign.Center,
+                        // Spazio verticale tra la prima e la seconda riga
+                        lineHeight = 18.sp
+                    )
+                }
+                Button(
+                    onClick = {
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = gray11),
+                    shape = RoundedCornerShape(8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(64.dp)
+                        .border(1.dp, textDarkGray, RoundedCornerShape(8.dp))
+                ) {
+                    Text(text = "PAUSA",
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        // Centra il testo orizzontalmente quando va a capo
+                        textAlign = TextAlign.Center,
+                        // Spazio verticale tra la prima e la seconda riga (Nel caso altre lingue andassero a capo)
+                        lineHeight = 18.sp
+                    )
                 }
 
                 Button(
                     onClick = {
+                        // Quando finisce una partita, lo stato viene resettato a false così al ritorno si potrà schiacciare
+                        // di nuovo il bottone AVVIA PARTITA
+                        isGameStarted = false
+
                         val stringaDaPassare = sequenceText
                         sequenceText = ""
                         onNavigateToSecondScreen(stringaDaPassare)
@@ -201,10 +250,19 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .weight(1f)
-                        .height(48.dp)
+                        .height(64.dp)
                         .border(1.dp, textDarkGray, RoundedCornerShape(8.dp))
                 ) {
-                    Text(text = stringResource(id = R.string.fine_partita), color = Color.White)
+                    Text(
+                        text = stringResource(id = R.string.fine_partita),
+                        color = Color.White,
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Bold,
+                        // Centra il testo orizzontalmente quando va a capo
+                        textAlign = TextAlign.Center,
+                        // Spazio verticale tra la prima e la seconda riga
+                        lineHeight = 18.sp
+                    )
                 }
             }
         }
@@ -241,8 +299,8 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 .then(modifier),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            displayBox(Modifier.fillMaxWidth().height(130.dp))
             gridBox(Modifier.weight(1f).fillMaxWidth())
+            displayBox(Modifier.fillMaxWidth().height(130.dp))
             controlBox(Modifier.fillMaxWidth())
         }
     }
