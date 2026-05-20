@@ -3,6 +3,7 @@ package com.example.simon
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.runtime.Composable
@@ -32,9 +33,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun SecondScreen(modifier: Modifier = Modifier, partite: List<String>, onBack: () -> Unit) {
+// Ho aggiunto il parametro "onMatchClick: (String) -> Unit", per comunicare a MatchActivity quale partita ha cliccato l'utente
+fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, onBack: () -> Unit, onMatchClick: (String) -> Unit
+) {
 
-    // SecondScreen è dichiarato BackHandler, quindi il tasto back al posto di chiudere l'app esegue il codice
+    // ListaPartite è dichiarato BackHandler, quindi il tasto back al posto di chiudere l'app esegue il codice
     // di onBack che si trova in mainActivity.
     BackHandler { onBack() }
 
@@ -81,7 +84,8 @@ fun SecondScreen(modifier: Modifier = Modifier, partite: List<String>, onBack: (
             // items crea un componente MatchItem per ogni stringa che si trova nella lista partite
             // Viene visualizzata la lista in ordine inverso in modo tale da vedere prima sempre le ultime partite giocate
             items(partite.reversed()) { sequenza ->
-                MatchItem(sequenza)
+                // Chiamo la funzione MatchItem che gestisce ogni singolo elemento della lista
+                MatchItem(sequenza = sequenza, onClick = { onMatchClick(sequenza) })
             }
         }
 
@@ -115,7 +119,9 @@ fun SecondScreen(modifier: Modifier = Modifier, partite: List<String>, onBack: (
 }
 
 @Composable
-fun MatchItem(sequenza: String) {
+// MatchItem definisce l'aspetto grafico e il comportamento di una singola riga della lista
+// Ho aggiunto il parametro onClick per gestire la pressione del componente da parte dell'utente
+fun MatchItem(sequenza: String, onClick: () -> Unit) {
     val textDarkGray = colorResource(id = R.color.dark_gray)
 
     // Calcola il numero di elementi della stringa
@@ -124,7 +130,10 @@ fun MatchItem(sequenza: String) {
     // Card serve per migliorare l'aspetto della lista;
     // di base crea uno sfondo arrotondato (di colore bianco) per ogni elemento della lista
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            // Ora la card è cliccabile
+            .clickable { onClick() },
         // Sfumatura che conferisce un aspetto 3D
         elevation = CardDefaults.cardElevation(4.dp)
     ) {

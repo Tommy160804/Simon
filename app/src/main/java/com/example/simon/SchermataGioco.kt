@@ -39,7 +39,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.runtime.mutableIntStateOf
 
 @Composable
-fun MainScreen(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String) -> Unit
+fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String) -> Unit
 ) {
     val colors = listOf(colorResource(id = R.color.red), colorResource(id = R.color.green), colorResource(id = R.color.blue), colorResource(id = R.color.magenta), colorResource(id = R.color.yellow), colorResource(id = R.color.cyan))
     val colorNames = listOf(stringResource(id = R.string.r), stringResource(id = R.string.g), stringResource(id = R.string.b), stringResource(id = R.string.m), stringResource(id = R.string.y), stringResource(id = R.string.c))

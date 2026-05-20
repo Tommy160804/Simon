@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -21,14 +22,18 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             SimonTheme {
-                var currentScreen by rememberSaveable { mutableStateOf(1) }
+                // All'apertura dell'app viene mostrata la schermata ListaPartite
+                var currentScreen by rememberSaveable { mutableIntStateOf(2) }
 
                 // Memorizza la lista di tutte le sequenze giocate
                 val matchesHistory = rememberSaveable { mutableStateListOf<String>() }
 
+                // Memorizza la sequenza selezionata per mostrarla nella schermata DettaglioPartita
+                var selectedSequence by rememberSaveable { mutableStateOf("") }
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
                     when (currentScreen) {
-                        1 -> MainScreen(
+                        1 -> SchermataGioco(
                             modifier = Modifier.padding(innerPadding),
                             onNavigateToSecondScreen = { nuovaSequenza ->
                                 // Aggiunge la partita appena finita alla lista (anche se vuota)
@@ -36,10 +41,20 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = 2
                             }
                         )
-                        2 -> SecondScreen(
+                        2 -> ListaPartite(
                             modifier = Modifier.padding(innerPadding),
-                            partite = matchesHistory, // Passa tutta la cronologia al secondScreen
-                            onBack = { currentScreen = 1 }
+                            partite = matchesHistory, // Passa tutta la cronologia a ListaPartite
+                            onBack = { currentScreen = 1 },
+                            // Gestisce il click su una partita e la navigazione alla schermata DettaglioPartita
+                            onMatchClick = { sequenza ->
+                                selectedSequence = sequenza
+                                currentScreen = 3
+                            }
+                        )
+                        3 -> DettaglioPartita(
+                            modifier = Modifier.padding(innerPadding),
+                            sequenza = selectedSequence,
+                            onBackToList = { currentScreen = 2 }
                         )
                     }
                 }
@@ -47,6 +62,15 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+/*
+@Preview(showBackground = true)
+@Composable
+fun GreetingPreview() {
+    SimonTheme {
+    }
+}
+*/
 
 /*
 @Preview(showBackground = true)
