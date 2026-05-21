@@ -139,8 +139,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             modifier = boxModifier
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .border(2.dp, textDarkGray, RoundedCornerShape(12.dp))
-                // Il colore cambia leggermente al tocco (opacità 0.3)
-                .background(containerColor.copy(alpha = 0.3f), RoundedCornerShape(12.dp))
                 .padding(12.dp)
         ) {
             // Questo calcolo serve per posizionare correttamente i bottoni in qualsiasi dispositivo
