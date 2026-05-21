@@ -26,6 +26,7 @@ class MainActivity : ComponentActivity() {
                 var currentScreen by rememberSaveable { mutableIntStateOf(2) }
 
                 // Memorizza la lista di tutte le sequenze giocate
+                //val matchesHistory = remember { mutableStateListOf<String>() }
                 val matchesHistory = rememberSaveable { mutableStateListOf<String>() }
 
                 // Memorizza la sequenza selezionata per mostrarla nella schermata DettaglioPartita
@@ -39,12 +40,14 @@ class MainActivity : ComponentActivity() {
                                 // Aggiunge la partita appena finita alla lista (anche se vuota)
                                 matchesHistory.add(nuovaSequenza)
                                 currentScreen = 2
-                            }
+                            },
+                            onBack = { currentScreen = 2 } // xx Spostato onBack come ultimo parametro
                         )
                         2 -> ListaPartite(
                             modifier = Modifier.padding(innerPadding),
                             partite = matchesHistory, // Passa tutta la cronologia a ListaPartite
-                            onBack = { currentScreen = 1 },
+                            // xx Rimosso onBack vecchio e sostituito con onNewGameClick per andare alla SchermataGioco (Schermo 1)
+                            newGame = { currentScreen = 1 },
                             // Gestisce il click su una partita e la navigazione alla schermata DettaglioPartita
                             onMatchClick = { sequenza ->
                                 selectedSequence = sequenza
@@ -62,15 +65,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SimonTheme {
-    }
-}
-*/
 
 /*
 @Preview(showBackground = true)

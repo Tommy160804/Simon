@@ -1,6 +1,5 @@
 package com.example.simon
 
-import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -33,13 +32,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
 @Composable
-// Ho aggiunto il parametro "onMatchClick: (String) -> Unit", per comunicare a MatchActivity quale partita ha cliccato l'utente
-fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, onBack: () -> Unit, onMatchClick: (String) -> Unit
-) {
-
-    // ListaPartite è dichiarato BackHandler, quindi il tasto back al posto di chiudere l'app esegue il codice
-    // di onBack che si trova in mainActivity.
-    BackHandler { onBack() }
+fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, newGame: () -> Unit, onMatchClick: (String) -> Unit) {
 
     val initialColor = colorResource(id = R.color.gray)
     val textDarkGray = colorResource(id = R.color.dark_gray)
@@ -53,7 +46,7 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, onBack: (
             .background(initialColor),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        // 1. Box del Titolo (aggiunto per coerenza con lo stile del MainScreen)
+        // 1. Box del Titolo
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -90,6 +83,7 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, onBack: (
         }
 
         // 3. Box del pulsante inferiore
+        // Il pulsante NUOVA PARTITA cambia schermata (passa a SchermataGioco)
         Box(
             modifier = Modifier
                 .fillMaxWidth()
@@ -99,8 +93,7 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, onBack: (
                 .padding(12.dp) // Spazio tra il bottone e la box
         ) {
             Button(
-                // Il bottone NUOVA SEQUENZA chiama onBack in MainActivity il quale permette di tornare allo schermo 1
-                onClick = onBack,
+                onClick = newGame,
                 colors = ButtonDefaults.buttonColors(containerColor = gray11),
                 shape = RoundedCornerShape(8.dp),
                 modifier = Modifier

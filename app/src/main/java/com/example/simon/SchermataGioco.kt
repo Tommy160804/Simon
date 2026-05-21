@@ -35,37 +35,57 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.res.Configuration
+import androidx.activity.compose.BackHandler
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import kotlinx.coroutines.delay
+import kotlin.random.Random
 
 @Composable
-fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String) -> Unit
-) {
+fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String) -> Unit, onBack: () -> Unit) {
+    BackHandler { onBack() }
+
+    // Lista dei 6 colori per i bottoni
     val colors = listOf(colorResource(id = R.color.red), colorResource(id = R.color.green), colorResource(id = R.color.blue), colorResource(id = R.color.magenta), colorResource(id = R.color.yellow), colorResource(id = R.color.cyan))
+    // Lista delle lettere associate ai colori per i testi dei bottoni e la sequenza
     val colorNames = listOf(stringResource(id = R.string.r), stringResource(id = R.string.g), stringResource(id = R.string.b), stringResource(id = R.string.m), stringResource(id = R.string.y), stringResource(id = R.string.c))
 
-    // Colore sfondo iniziale
     val initialColor = colorResource(id = R.color.gray)
     val textDarkGray = colorResource(id = R.color.dark_gray)
     val gray11 = colorResource(id = R.color.gray1)
-    val white = colorResource(id = R.color.white1)
 
-    /*
-    * rememberSaveable non funziona con Color in quanto non è un tipo primitivo; perciò trasformo il colore in un Int
-    * (Dopodiché l'Int lo riconverto in Color durante la Recomposition)
-    * */
+    // Memorizza l'intero (ARGB) del colore di sfondo del container principale
     var containerColorArgb by rememberSaveable { mutableIntStateOf(initialColor.toArgb()) }
-    // Trasformo l'Int in un oggetto Color per usarlo nei modifier
+
+    // Converte il valore intero salvato in un oggetto 'Color' di Compose
     val containerColor = Color(containerColorArgb)
 
+    // Memorizza la stringa di testo che mostra a schermo la cronologia dei colori premuti dall'utente nel round attuale
     var sequenceText by rememberSaveable { mutableStateOf("") }
+
+    // Gestisce lo stato dello scorrimento verticale per l'area di testo
     val scrollState = rememberScrollState()
 
-    // Variabile per sapere se la partita è iniziata o meno
-    var isGameStarted by rememberSaveable { mutableStateOf(false) }
+    // Variabile booleana per lo stato del gioco: 'true' se la partita è in corso
+    var statoPartita by rememberSaveable { mutableStateOf(false) }
 
-    // Individuo l'orientamento per decidere la disposizione
+    // Memorizza la sequenza di indici (0..5) generata dal PC
+    val giocoSequenza = remember { mutableStateListOf<Int>() }
+
+    // Tiene traccia dell'indice del bottone attualmente "illuminato"
+    // -1 significa che non vi è nessun bottone illuminato (ad esempio a inizio partita)
+    var bottoneIlluminato by rememberSaveable { mutableIntStateOf(-1) }
+
+    // Variabile di stato che indica se è o meno il turno del PC
+    var turnoPC by rememberSaveable { mutableStateOf(false) }
+
+    // Tiene traccia della posizione corrente che l'utente deve indovinare
+    var utenteIndiceCorrente by rememberSaveable { mutableIntStateOf(0) }
+
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     /*
@@ -135,23 +155,54 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 modifier = Modifier.fillMaxSize()
             ) {
                 items(6) { index ->
+                    // Restituisce true solo per il bottone che è illuminato
+                    val illuminato: Boolean = (bottoneIlluminato == index)
+                    // L'unico colore che non viene sfumato è quello illuminato
+                    val coloreBottone = if (illuminato) colors[index] else colors[index].copy(alpha = 0.4f)
+
                     Button(
                         onClick = {
-                            // I bottoni sono cliccabili solo se lap partita è in corso
-                            // (successivamente dovranno potere essere schiacciati solo quando è il turno del giocatore)
-                            if (isGameStarted) {
-                                // Salvo il colore in un Int così sopravvive alla rotazione
-                                // android studio dice; "Assigned value never used", ma non è vero
+                            /*
+                            *  Vengono verificate 3 condizioni per fare si che l'utente possa cliccare solo quando è il suo turno;
+                            *  --> Il gioco deve essere avviato (l'utente non può premere se non ha cliccato "AVVIA PARTITA")
+                            *  --> nessun bottone deve essere nel mezzo di un lampeggio
+                            *  --> Il gioco non deve essere nella fase di riproduzione della sua sequenza
+                            * */
+                            if (statoPartita && bottoneIlluminato == -1 && !turnoPC) {
+                                // Imposto il colore dello sfondo in base al colore appena premuto
                                 containerColorArgb = colors[index].toArgb()
                                 val letter = colorNames[index]
+
+                                // Mostra il carattere appena scelto nella stringa di testo non editabile
                                 sequenceText = if (sequenceText.isEmpty()) letter else "$sequenceText, $letter"
+
+                                // Il gioco controlla che l'utente abbia premuto il tasto corretto
+                                if (index == giocoSequenza[utenteIndiceCorrente]) {
+                                    // Incremento utenteIndiceCorrente; ora il gioco si aspetta che l'utente inserisca il prossimo colore corretto
+                                    utenteIndiceCorrente++
+
+                                    // Questo if viene eseguito se l'utente ha digitato l'intera sequenza corretta
+                                    if (utenteIndiceCorrente == giocoSequenza.size) {
+                                        utenteIndiceCorrente = 0
+                                        // Inizia il turno del PC
+                                        turnoPC = true
+                                    }
+                                } else {
+                                    // Errore da parte dell'utente; termina la partita e passa la stringa finale
+                                    statoPartita = false
+                                    val stringaFinale = sequenceText
+                                    sequenceText = ""
+                                    giocoSequenza.clear()
+                                    utenteIndiceCorrente = 0
+                                    onNavigateToSecondScreen(stringaFinale)
+                                }
                             }
                         },
 
                         // Pongo enabled = true; cosi i colori della matrice
                         // rimangono sempre visibili anche se la partita non è avviata
                         enabled = true,
-                        colors = ButtonDefaults.buttonColors(containerColor = colors[index]),
+                        colors = ButtonDefaults.buttonColors(containerColor = coloreBottone),
                         shape = RoundedCornerShape(20.dp),
                         modifier = Modifier
                             .height(itemHeight)
@@ -162,8 +213,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                             text = colorNames[index],
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Medium,
-                            // La lettera all'interno dei bottoni da schiacciare cambia in base al colore del bottone.
-                            // (Ad esempio la lettera "Y" sul giallo se è bianca non si legge praticamente).
                             color = if (colors[index] == Color.Yellow || colors[index] == Color.Cyan) textDarkGray else Color.White
                         )
                     }
@@ -172,8 +221,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
         }
     }
 
-    // 3. Box che racchiude i pulsanti Cancella e Fine Partita (Avvia, Pausa e Fine Partita)
-    // xx Per ora i pulsanti non fanno le cose giuste
+    // 3. Box dei controlli inferiori
     val controlBox = @Composable { boxModifier: Modifier ->
         Box(
             modifier = boxModifier
@@ -188,17 +236,17 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             ) {
                 Button(
                     onClick = {
-                        // Imposto lo stato a true per bloccare il bottone AVVIA PARTITA e sbloccare la matrice di colori
-                        isGameStarted = true
-
+                        statoPartita = true
                         sequenceText = ""
                         // Ripristino il colore grigio
                         // android studio dice; "Assigned value never used", ma non è vero; senza questa riga dopo avere premuto
-                        // "CANCELLA" rimane l'ultimo colore cliccato
                         containerColorArgb = initialColor.toArgb()
+                        giocoSequenza.clear()
+                        utenteIndiceCorrente = 0
+                        // L'utente avvia la partita; come prima cosa tocca al PC riprodurre una sequenza (di un elemento il primo turno)
+                        turnoPC = true
                     },
-                    // Il bottone AVVIA PARTITA è attivo solo se la partita NON è ancora iniziata
-                    enabled = !isGameStarted,
+                    enabled = !statoPartita,
                     colors = ButtonDefaults.buttonColors(containerColor = gray11),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
@@ -209,7 +257,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                     Text(text = "AVVIA PARTITA",
                         color = Color.White,
                         fontWeight = FontWeight.Bold,
-                        // Centra il testo orizzontalmente quando va a capo
+                        // Centra il testo orizzontalmente
                         textAlign = TextAlign.Center,
                         // Spazio verticale tra la prima e la seconda riga
                         lineHeight = 18.sp
@@ -229,7 +277,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        // Centra il testo orizzontalmente quando va a capo
+                        // Centra il testo orizzontalmente
                         textAlign = TextAlign.Center,
                         // Spazio verticale tra la prima e la seconda riga (Nel caso altre lingue andassero a capo)
                         lineHeight = 18.sp
@@ -238,12 +286,11 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
                 Button(
                     onClick = {
-                        // Quando finisce una partita, lo stato viene resettato a false così al ritorno si potrà schiacciare
-                        // di nuovo il bottone AVVIA PARTITA
-                        isGameStarted = false
-
+                        statoPartita = false
                         val stringaDaPassare = sequenceText
                         sequenceText = ""
+                        giocoSequenza.clear()
+                        utenteIndiceCorrente = 0
                         onNavigateToSecondScreen(stringaDaPassare)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = gray11),
@@ -258,7 +305,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        // Centra il testo orizzontalmente quando va a capo
+                        // Centra il testo orizzontalmente
                         textAlign = TextAlign.Center,
                         // Spazio verticale tra la prima e la seconda riga
                         lineHeight = 18.sp
@@ -271,7 +318,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
     /*
     * if/else che permettono di scegliere il layout corretto in base all'orientamento
     * */
-
     if (isLandscape) {
         // Modalità landscape;
         // .weight(1f) sia alla matrice che alla colonna a dx; così facendo entrambi occupano metà schermo
@@ -302,6 +348,42 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             gridBox(Modifier.weight(1f).fillMaxWidth())
             displayBox(Modifier.fillMaxWidth().height(130.dp))
             controlBox(Modifier.fillMaxWidth())
+        }
+    }
+
+    // Coroutine per gestire la transizione tra turno giocatore e turno PC
+    LaunchedEffect(turnoPC) {
+        // if che viene eseguito solo se è il turno del PC e la partita è in corso
+        if (turnoPC && statoPartita) {
+            // Appena l'utente finisce di digitare l'ultima lettera della sequenza, la sequenza resta
+            // visibile all'utente per altri 1.2 secondi.
+            delay(1200)
+
+            // Dopo i 1200ms l'area di testo viene ripulita (perchè ricomincia il turno del PC)
+            sequenceText = ""
+
+            // Il PC genera la nuova lettera
+            val nuovoIndiceCasuale = Random.nextInt(6)
+            // la lettera viene aggiunta alla fine della sequenza
+            giocoSequenza.add(nuovoIndiceCasuale)
+
+            // Tempo che intercorre tra la rimozione della stringa di testo non editabile e la prima lettera della sequenza proposta dal PC
+            // (è anche il tempo che l'utente deve aspettare per vedere la prima lettera generata casualmente dal PC dopo avere cliccato AVVIA PARTITA)
+            delay(800)
+
+            // Il PC fa lampeggiare tutta la sequenza aggiornata
+            for (indice in giocoSequenza) {
+                bottoneIlluminato = indice
+                containerColorArgb = colors[indice].toArgb()
+                delay(500)
+
+                bottoneIlluminato = -1
+                containerColorArgb = initialColor.toArgb()
+                delay(250)
+            }
+
+            // turnoPC torna ad avere valore false in quanto inizia il turno del giocatore
+            turnoPC = false
         }
     }
 }
