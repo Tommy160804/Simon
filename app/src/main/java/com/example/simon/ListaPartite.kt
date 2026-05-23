@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -26,13 +27,16 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, newGame: () -> Unit, onMatchClick: (String) -> Unit) {
+fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteComplete: List<String>, newGame: () -> Unit, onMatchClick: (String) -> Unit) {
 
     val initialColor = colorResource(id = R.color.gray)
     val textDarkGray = colorResource(id = R.color.dark_gray)
@@ -74,11 +78,19 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, newGame: 
             // Distanza tra ogni elemento della lista
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // items crea un componente MatchItem per ogni stringa che si trova nella lista partite
+            // itemsIndexed crea un componente MatchItem per ogni stringa che si trova nella lista partite
             // Viene visualizzata la lista in ordine inverso in modo tale da vedere prima sempre le ultime partite giocate
-            items(partite.reversed()) { sequenza ->
-                // Chiamo la funzione MatchItem che gestisce ogni singolo elemento della lista
-                MatchItem(sequenza = sequenza, onClick = { onMatchClick(sequenza) })
+            val listaInvertita = partite.reversed()
+            val listaCompletaInvertita = partiteComplete.reversed()
+
+            // MatchItem crea un elemento della lista per ogni partita completata
+            itemsIndexed(listaInvertita) { index, sequenza ->
+                val sequenzaCompleta = listaCompletaInvertita[index]
+                MatchItem(
+                    sequenza = sequenza,
+                    sequenza1 = sequenzaCompleta,
+                    onClick = { onMatchClick(sequenza) }
+                )
             }
         }
 
@@ -114,11 +126,28 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, newGame: 
 @Composable
 // MatchItem definisce l'aspetto grafico e il comportamento di una singola riga della lista
 // Ho aggiunto il parametro onClick per gestire la pressione del componente da parte dell'utente
-fun MatchItem(sequenza: String, onClick: () -> Unit) {
+fun MatchItem(sequenza: String, sequenza1: String, onClick: () -> Unit) {
     val textDarkGray = colorResource(id = R.color.dark_gray)
 
     // Calcola il numero di elementi della stringa
-    val conteggio = if (sequenza.isEmpty()) 0 else sequenza.split(", ").size
+    // Lascio l'if/else per sicurezza ma in teoria non dovrebbe mai essere 0 la sequenza
+    // Vi è il -1 perchè la sequenza indovinata sarà sempre pari alla sequenza totale proposta dal PC -1 in quanto l'ultimo elemento sarà errato
+    // (altrimenti la partita continuerebbe all'infinito senza errori da parte del giocatore)
+    val conteggio = if (sequenza1.isEmpty()) 0 else {(sequenza1.split(", ").size - 1)}
+
+    // Trasformo la stringa di bottoni corretti premuti dal'utente (nell'ultimo giro, cioè quello in cui sbaglia) nel formato con la virgola
+    // L'ultimo elemento che l'utente schiaccia è sicuramente errato perciò lo rimuovo
+    val elementiSenzaErrore = sequenza.split(", ").dropLast(1)
+
+    // Aggiungo ", " alla fine solo se la lista contiene almeno un elemento indovinato
+    val sequenzaCorretta = if (elementiSenzaErrore.isNotEmpty()) {
+        elementiSenzaErrore.joinToString(", ") + ", "
+    } else {
+        ""
+    }
+
+    // Sequenza che nell'ultimo giro non è stata indovinata dall'utente
+    val sequenzaRimanente = sequenza1.removePrefix(sequenzaCorretta)
 
     // Card serve per migliorare l'aspetto della lista;
     // di base crea uno sfondo arrotondato (di colore bianco) per ogni elemento della lista
@@ -149,16 +178,26 @@ fun MatchItem(sequenza: String, onClick: () -> Unit) {
             // Destra --> Sequenza troncata
             // maxLines = 1 e overflow = Ellipsis gestiscono automaticamente l'indicatore grafico di troncamento (...)
             Text(
-                // Gestione del caso in cui l'utente non schiaccia nessun pulsante
-                text = sequenza.ifEmpty { stringResource(id = R.string.nessun_rettangolo) },
-                color = textDarkGray,
-                // 70% dello schermo per la parte destra
+                text = buildAnnotatedString {
+                    // Verde la sequenza corretta
+                    withStyle(style = SpanStyle(
+                        color = colorResource(R.color.dark_green),
+                        fontWeight = FontWeight.Bold
+                    )
+                    ) {
+                        append(sequenzaCorretta)
+                    }
+                    // Rossa la sequenza rimanente/errore
+                    withStyle(style = SpanStyle(color = colorResource(R.color.red), fontWeight = FontWeight.Bold)) {
+                        append(sequenzaRimanente)
+                    }
+                },
+                // Occupa il 70% dello schermo rimanente
                 modifier = Modifier.weight(0.7f),
-                // Allinea il testo sulla destra del contenitore
-                textAlign = Arrangement.End.let { TextAlign.End },
-                // Il testo può occupare un'unica riga
+                // Allinea tutto a destra
+                textAlign = TextAlign.End,
+                // Gestione del troncamento su un'unica riga
                 maxLines = 1,
-                // Se il testo è troppo lungo aggiunge i 3 puntini di sospensione
                 overflow = TextOverflow.Ellipsis
             )
         }

@@ -26,8 +26,10 @@ class MainActivity : ComponentActivity() {
                 var currentScreen by rememberSaveable { mutableIntStateOf(2) }
 
                 // Memorizza la lista di tutte le sequenze giocate
-                //val matchesHistory = remember { mutableStateListOf<String>() }
                 val matchesHistory = rememberSaveable { mutableStateListOf<String>() }
+
+                // Memorizza la lista di tutte le sequenze complete
+                val completeMatchHistory = rememberSaveable { mutableStateListOf<String>() }
 
                 // Memorizza la sequenza selezionata per mostrarla nella schermata DettaglioPartita
                 var selectedSequence by rememberSaveable { mutableStateOf("") }
@@ -36,17 +38,22 @@ class MainActivity : ComponentActivity() {
                     when (currentScreen) {
                         1 -> SchermataGioco(
                             modifier = Modifier.padding(innerPadding),
-                            onNavigateToSecondScreen = { nuovaSequenza ->
-                                // Aggiunge la partita appena finita alla lista (anche se vuota)
-                                matchesHistory.add(nuovaSequenza)
+                            onNavigateToSecondScreen = { nuovaSequenza, nuovaSequenzaCompleta->
+                                // Questo if serve per gestire il caso limite in cui l'utente preme Avvia Partita e subito dopo preme Fine Partita
+                                if (nuovaSequenzaCompleta.isNotEmpty()) {
+                                    // Aggiunge la partita appena finita alla lista (anche se vuota)
+                                    matchesHistory.add(nuovaSequenza)
+                                    // Aggiunge la partita completa alla lista
+                                    completeMatchHistory.add(nuovaSequenzaCompleta)
+                                }
                                 currentScreen = 2
                             },
-                            onBack = { currentScreen = 2 } // xx Spostato onBack come ultimo parametro
+                            onBack = { currentScreen = 2 }
                         )
                         2 -> ListaPartite(
                             modifier = Modifier.padding(innerPadding),
                             partite = matchesHistory, // Passa tutta la cronologia a ListaPartite
-                            // xx Rimosso onBack vecchio e sostituito con onNewGameClick per andare alla SchermataGioco (Schermo 1)
+                            partiteComplete = completeMatchHistory, // Passa le partite complete a ListaPartite
                             newGame = { currentScreen = 1 },
                             // Gestisce il click su una partita e la navigazione alla schermata DettaglioPartita
                             onMatchClick = { sequenza ->

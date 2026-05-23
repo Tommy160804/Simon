@@ -46,7 +46,7 @@ import kotlinx.coroutines.delay
 import kotlin.random.Random
 
 @Composable
-fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String) -> Unit, onBack: () -> Unit) {
+fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String, String) -> Unit, onBack: () -> Unit) {
     BackHandler { onBack() }
 
     // Lista dei 6 colori per i bottoni
@@ -66,6 +66,8 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
     // Memorizza la stringa di testo che mostra a schermo la cronologia dei colori premuti dall'utente nel round attuale
     var sequenceText by rememberSaveable { mutableStateOf("") }
+
+    var sequenzaTotale by rememberSaveable {mutableStateOf("") }
 
     // Gestisce lo stato dello scorrimento verticale per l'area di testo
     val scrollState = rememberScrollState()
@@ -120,6 +122,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 fontSize = 24.sp,
                 // Testo in grassetto
                 fontWeight = FontWeight.Bold,
+                // ciclo for per il colore
                 color = textDarkGray,
                 lineHeight = 30.sp
             )
@@ -171,7 +174,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                                 containerColorArgb = colors[index].toArgb()
                                 val letter = colorNames[index]
 
-                                // Mostra il carattere appena scelto nella stringa di testo non editabile
+                                // Salva il carattere appena scelto in sequenceText; questo carattere sarà mostrato nell'area di testo non editabile
                                 sequenceText = if (sequenceText.isEmpty()) letter else "$sequenceText, $letter"
 
                                 // Il gioco controlla che l'utente abbia premuto il tasto corretto
@@ -189,10 +192,11 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                                     // Errore da parte dell'utente; termina la partita e passa la stringa finale
                                     statoPartita = false
                                     val stringaFinale = sequenceText
+                                    val stringaFinale1 = sequenzaTotale
                                     sequenceText = ""
                                     giocoSequenza.clear()
                                     utenteIndiceCorrente = 0
-                                    onNavigateToSecondScreen(stringaFinale)
+                                    onNavigateToSecondScreen(stringaFinale, stringaFinale1)
                                 }
                             }
                         },
@@ -284,12 +288,17 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
                 Button(
                     onClick = {
+                        // Il giocatore ha tempo fino a che finisce di brillare (+ altri 250ms per essere precisi) il bottone
+                        // per schiacciare Fine partita per fare in modo che non venga salvata la partita in corso
+                        val primaSequenzaInCorso = (giocoSequenza.size == 1) && turnoPC
+
                         statoPartita = false
                         val stringaDaPassare = sequenceText
+                        val stringaDaPassare1 = if (primaSequenzaInCorso) "" else sequenzaTotale
                         sequenceText = ""
                         giocoSequenza.clear()
                         utenteIndiceCorrente = 0
-                        onNavigateToSecondScreen(stringaDaPassare)
+                        onNavigateToSecondScreen(stringaDaPassare, stringaDaPassare1)
                     },
                     colors = ButtonDefaults.buttonColors(containerColor = gray11),
                     shape = RoundedCornerShape(8.dp),
@@ -365,6 +374,9 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             // la lettera viene aggiunta alla fine della sequenza
             giocoSequenza.add(nuovoIndiceCasuale)
 
+            val letter = colorNames[nuovoIndiceCasuale]
+            sequenzaTotale = if (sequenzaTotale.isEmpty()) letter else "$sequenzaTotale, $letter"
+            // Sequenza totale che verrà passata a ListaPartite
             // Tempo che intercorre tra la rimozione della stringa di testo non editabile e la prima lettera della sequenza proposta dal PC
             // (è anche il tempo che l'utente deve aspettare per vedere la prima lettera generata casualmente dal PC dopo avere cliccato AVVIA PARTITA)
             delay(800)
