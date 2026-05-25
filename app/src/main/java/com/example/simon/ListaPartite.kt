@@ -36,7 +36,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteComplete: List<String>, newGame: () -> Unit, onMatchClick: (String) -> Unit) {
+fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteComplete: List<String>, newGame: () -> Unit, onMatchClick: (String, String) -> Unit) {
 
     val initialColor = colorResource(id = R.color.gray)
     val textDarkGray = colorResource(id = R.color.dark_gray)
@@ -78,18 +78,14 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteCo
             // Distanza tra ogni elemento della lista
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            // itemsIndexed crea un componente MatchItem per ogni stringa che si trova nella lista partite
-            // Viene visualizzata la lista in ordine inverso in modo tale da vedere prima sempre le ultime partite giocate
-            val listaInvertita = partite.reversed()
-            val listaCompletaInvertita = partiteComplete.reversed()
 
             // MatchItem crea un elemento della lista per ogni partita completata
-            itemsIndexed(listaInvertita) { index, sequenza ->
-                val sequenzaCompleta = listaCompletaInvertita[index]
+            itemsIndexed(partite) { index, sequenza ->
+                val sequenzaCompleta = partiteComplete[index]
                 MatchItem(
                     sequenza = sequenza,
                     sequenza1 = sequenzaCompleta,
-                    onClick = { onMatchClick(sequenza) }
+                    onClick = { onMatchClick(sequenza, sequenzaCompleta) }
                 )
             }
         }

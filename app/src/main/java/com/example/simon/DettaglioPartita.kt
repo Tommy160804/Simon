@@ -26,9 +26,17 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.width
+
 
 @Composable
-fun DettaglioPartita(modifier: Modifier = Modifier, sequenza: String, onBackToList: () -> Unit
+fun DettaglioPartita(modifier: Modifier = Modifier, sequenzaUtente: String, sequenzaCorretta: String, onBackToList: () -> Unit
 ) {
     // Intercetta il tasto back fisico del telefono per tornare alla lista
     BackHandler { onBackToList() }
@@ -37,8 +45,16 @@ fun DettaglioPartita(modifier: Modifier = Modifier, sequenza: String, onBackToLi
     val textDarkGray = colorResource(id = R.color.dark_gray)
     val gray11 = colorResource(id = R.color.gray1)
 
-    // Calcola il numero di elementi (stessa logica di MatchItem)
-    val conteggio = if (sequenza.isEmpty()) 0 else sequenza.split(", ").size
+    // Calcola il numero di elementi (stessa logica di MatchItem in ListaPartite.kt)
+    val conteggio = if (sequenzaCorretta.isEmpty()) 0 else (sequenzaCorretta.split(", ").size - 1)
+    val elementiSenzaErrore = sequenzaUtente.split(", ").dropLast(1)
+
+    val parteVerde = if (elementiSenzaErrore.isNotEmpty()) {
+        elementiSenzaErrore.joinToString(", ") + ", "
+    } else {
+        ""
+    }
+    val parteRossa = sequenzaCorretta.removePrefix(parteVerde)
 
     // Gestisce lo scorrimento verticale se la sequenza finale è troppo lunga
     val scrollState = rememberScrollState()
@@ -68,15 +84,6 @@ fun DettaglioPartita(modifier: Modifier = Modifier, sequenza: String, onBackToLi
             )
         }
 
-        // Punteggio totale; non si trova nel posto corretto
-        Text(
-            // ERRORE; QUI DEVO SCRIVERE PUNTEGGIO NON SCORE --> da correggere
-            text = stringResource(id = R.string.punti, conteggio),
-            fontSize = 22.sp,
-            fontWeight = FontWeight.Bold,
-            color = textDarkGray,
-            modifier = Modifier.padding(bottom = 8.dp)
-        )
 
         // Area di testo; mostra la sequenza senza troncamenti
         Box(
@@ -86,21 +93,68 @@ fun DettaglioPartita(modifier: Modifier = Modifier, sequenza: String, onBackToLi
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp)
                 .border(2.dp, textDarkGray, RoundedCornerShape(12.dp))
-                // NON VA BENE IL COLORE BIANCO
-                // Il testo è troppo piccolo e probabilmente in grassetto è anche più bello
-                .background(Color.White, RoundedCornerShape(12.dp)) // Usato il bianco per far risaltare il testo delle sequenze, ma non mi piace ancora, cambierò
+                .background(initialColor, RoundedCornerShape(12.dp))
                 .padding(16.dp)
-                .verticalScroll(scrollState) // Testo scorribile nel caso sia molto lunga la sequenza
         ) {
-            Text(
-                text = sequenza.ifEmpty { stringResource(id = R.string.nessun_rettangolo) },
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Medium,
-                color = textDarkGray,
-                lineHeight = 28.sp,
-                textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth()
-            )
+            // Row gestisce; i punti a sinistra, la linea in mezzo e le sequenze a destra
+            Row(
+                modifier = Modifier.fillMaxSize(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Punteggio totale
+                Text(
+                    text = stringResource(id = R.string.punti, conteggio),
+                    fontSize = 24.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = textDarkGray,
+                    modifier = Modifier.weight(0.35f), // Prende il 35% dello spazio a sinistra
+                    textAlign = TextAlign.Start // Allineato a sinistra come nella lista delle partite
+                )
+
+                // Linea grigia inserita tra i punti e l'elenco dei bottoni
+                Box(
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .padding(horizontal = 12.dp, vertical = 8.dp)
+                        .width(1.5.dp)
+                        .background(textDarkGray)
+                )
+
+                // Box che gestisce la lista di bottoni premuti
+                Box(
+                    modifier = Modifier
+                        .weight(0.65f) //  Prende il 65% dello spazio a destra
+                        .fillMaxHeight()
+                        .verticalScroll(scrollState), // Testo scorribile nel caso sia molto lunga la sequenza
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = buildAnnotatedString {
+                            withStyle(style = SpanStyle(
+                                color = colorResource(R.color.dark_green),
+                                fontWeight = FontWeight.Bold
+                            )) {
+                                append(parteVerde)
+                            }
+                            withStyle(style = SpanStyle(
+                                color = colorResource(R.color.red),
+                                fontWeight = FontWeight.Bold
+                            )
+                            ) {
+                                append(parteRossa)
+                            }
+
+                        },
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = textDarkGray,
+                        lineHeight = 34.sp,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
         }
 
         // Questo deve diventare un floating button

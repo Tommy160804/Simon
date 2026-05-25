@@ -44,6 +44,8 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import kotlinx.coroutines.delay
 import kotlin.random.Random
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
 
 @Composable
 fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String, String) -> Unit, onBack: () -> Unit) {
@@ -90,6 +92,11 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
+    // scope permette di fare operazioni asincrone dentro l'onClick di un bottone
+    val scope = rememberCoroutineScope()
+    // Memorizza il lavoro attualmente in corso
+    var lampeggioUtente by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
     /*
     * Definizione delle 3 funzioni lambda;
     * 1. Area di testo non editabile
@@ -113,7 +120,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 * Al posto di rimpicciolire le lettere l'utente scorre col dito verso il basso la lista,
                 * così facendo l'utente vede le lettere sempre con la stessa dimensione.
                 * (Così facendo le prime lettere non sono più visibili ma sicuramente non sono necessarie all'utente per
-                * proseguire il gioco, e in ogni caso è sufficiente scorrere col dito verso l'alto per vedere le prime lettere inserite).
+                * proseguire il gioco, e in ogni caso è sufficiente scorrere col dito verso l'alto per vedere las prime lettere inserite).
                 * */
                 .verticalScroll(scrollState)
         ) {
@@ -159,23 +166,33 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                     // Restituisce true solo per il bottone che è illuminato
                     val illuminato: Boolean = (bottoneIlluminato == index)
                     // L'unico colore che non viene sfumato è quello illuminato
-                    val coloreBottone = if (illuminato) colors[index] else colors[index].copy(alpha = 0.4f)
+                    val coloreBottone = if (illuminato) colors[index] else colors[index].copy(alpha = 0.5f)
 
                     Button(
                         onClick = {
                             /*
-                            *  Vengono verificate 3 condizioni per fare si che l'utente possa cliccare solo quando è il suo turno;
-                            *  --> Il gioco deve essere avviato (l'utente non può premere se non ha cliccato "AVVIA PARTITA")
-                            *  --> nessun bottone deve essere nel mezzo di un lampeggio
-                            *  --> Il gioco non deve essere nella fase di riproduzione della sua sequenza
+                            * Vengono verificate 2 condizioni per fare si che l'utente possa cliccare solo quando è il suo turno;
+                            * --> Il gioco deve essere avviato (l'utente non può premere se non ha cliccato "AVVIA PARTITA")
+                            * --> Il gioco non deve essere nella fase di riproduzione della sua sequenza
                             * */
-                            if (statoPartita && bottoneIlluminato == -1 && !turnoPC) {
+                            if (statoPartita && !turnoPC) {
                                 // Imposto il colore dello sfondo in base al colore appena premuto
                                 containerColorArgb = colors[index].toArgb()
                                 val letter = colorNames[index]
 
                                 // Salva il carattere appena scelto in sequenceText; questo carattere sarà mostrato nell'area di testo non editabile
                                 sequenceText = if (sequenceText.isEmpty()) letter else "$sequenceText, $letter"
+
+                                // Interrompo il lampeggio precedente (se è ancora attivo)
+                                lampeggioUtente?.cancel()
+                                // Gestione dell'accensione e spegnimento del bottone
+                                lampeggioUtente = scope.launch {
+                                    bottoneIlluminato = index
+                                    // Tempo leggermente inferiore rispetto a ciò che mostra il turno PC;
+                                    // l'utente durante il turno del PC ha bisogno di un po' di tempo in più per potere vedere bene qual è il colore scelto dal PC
+                                    delay(400)
+                                    bottoneIlluminato = -1
+                                }
 
                                 // Il gioco controlla che l'utente abbia premuto il tasto corretto
                                 if (index == giocoSequenza[utenteIndiceCorrente]) {
@@ -209,7 +226,12 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         modifier = Modifier
                             .height(itemHeight)
                             .fillMaxWidth()
-                            .border(1.dp, textDarkGray, RoundedCornerShape(20.dp))
+                            // Uso il colore del bottone per il bordo quando è acceso per fare risaltare di più il bottone
+                            .border(
+                                width = 1.dp,
+                                color = if (illuminato) colors[index] else textDarkGray,
+                                shape = RoundedCornerShape(20.dp)
+                            )
                     ) {
                         Text(
                             text = colorNames[index],
@@ -245,19 +267,29 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         containerColorArgb = initialColor.toArgb()
                         giocoSequenza.clear()
                         utenteIndiceCorrente = 0
-                        // L'utente avvia la partita; come prima cosa tocca al PC riprodurre una sequenza (di un elemento il primo turno)
+                        // L'utente avvia la partita; come prima cosa tocca al PC riproduzione una sequenza (di un elemento il primo turno)
                         turnoPC = true
                     },
                     enabled = !statoPartita,
-                    colors = ButtonDefaults.buttonColors(containerColor = gray11),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = gray11, // Colore scuro quando il bottone è attivo
+                        disabledContainerColor = initialColor, // Colore chiaro quando è disattivato
+                        contentColor = Color.White,
+                        disabledContentColor = textDarkGray
+                    ),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .weight(1f)
                         .height(64.dp)
-                        .border(1.dp, textDarkGray, RoundedCornerShape(8.dp))
+                        // Anche il colore del bordo si adatta allo stato enabled/disabled;
+                        // Colore più chiaro se il bottone è disattivato
+                        .border(
+                            width = 1.dp,
+                            color = if (!statoPartita) textDarkGray else textDarkGray.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
                 ) {
                     Text(text = "AVVIA PARTITA",
-                        color = Color.White,
                         fontWeight = FontWeight.Bold,
                         // Centra il testo orizzontalmente
                         textAlign = TextAlign.Center,
@@ -288,28 +320,49 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
                 Button(
                     onClick = {
-                        // Il giocatore ha tempo fino a che finisce di brillare (+ altri 250ms per essere precisi) il bottone
-                        // per schiacciare Fine partita per fare in modo che non venga salvata la partita in corso
-                        val primaSequenzaInCorso = (giocoSequenza.size == 1) && turnoPC
-
                         statoPartita = false
                         val stringaDaPassare = sequenceText
-                        val stringaDaPassare1 = if (primaSequenzaInCorso) "" else sequenzaTotale
+
+                        // Se giocoSequenza.size è 1 E il turnoPC è ancora true,
+                        // significa che il PC sta ancora facendo il primissimo lampeggio.
+                        val primaSequenzaInCorso = (giocoSequenza.size == 1) && turnoPC
+
+                        // Salva solo se la lista non è vuota E se il PC ha finito di lampeggiare (primaSequenzaInCorso è false)
+                        val stringaDaPassare1 = if (giocoSequenza.isNotEmpty() && !primaSequenzaInCorso) {
+                            sequenzaTotale
+                        } else {
+                            ""
+                        }
+
                         sequenceText = ""
+                        sequenzaTotale = ""
                         giocoSequenza.clear()
                         utenteIndiceCorrente = 0
+
                         onNavigateToSecondScreen(stringaDaPassare, stringaDaPassare1)
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = gray11),
+                    // Il pulsante è attivo solo se la partita è in corso (cioè dopo avere premuto AVVIA PARTITA)
+                    enabled = statoPartita,
+                    // I colori di FINE PARTITA sono invertiti rispetto quelli di AVVIA PARTITA
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = gray11, // Colore scuro quando è attivo (partita in corso)
+                        disabledContainerColor = initialColor, // Colore chiaro quando è disattivato (partita spenta)
+                        contentColor = Color.White,
+                        disabledContentColor = textDarkGray
+                    ),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .weight(1f)
                         .height(64.dp)
-                        .border(1.dp, textDarkGray, RoundedCornerShape(8.dp))
+                        // Il bordo cambia colore in modo contrario rispetto ad AVVIA PARTITA
+                        .border(
+                            width = 1.dp,
+                            color = if (statoPartita) textDarkGray else textDarkGray.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
                 ) {
                     Text(
                         text = stringResource(id = R.string.fine_partita),
-                        color = Color.White,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
                         // Centra il testo orizzontalmente
@@ -362,6 +415,15 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
     LaunchedEffect(turnoPC) {
         // if che viene eseguito solo se è il turno del PC e la partita è in corso
         if (turnoPC && statoPartita) {
+            // Il PC genera la nuova lettera
+            val nuovoIndiceCasuale = Random.nextInt(6)
+
+            // la lettera viene aggiunta alla fine della sequenza
+            giocoSequenza.add(nuovoIndiceCasuale)
+
+            val letter = colorNames[nuovoIndiceCasuale]
+            sequenzaTotale = if (sequenzaTotale.isEmpty()) letter else "$sequenzaTotale, $letter"
+
             // Appena l'utente finisce di digitare l'ultima lettera della sequenza, la sequenza resta
             // visibile all'utente per altri 1.2 secondi.
             delay(1200)
@@ -369,16 +431,9 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             // Dopo i 1200ms l'area di testo viene ripulita (perchè ricomincia il turno del PC)
             sequenceText = ""
 
-            // Il PC genera la nuova lettera
-            val nuovoIndiceCasuale = Random.nextInt(6)
-            // la lettera viene aggiunta alla fine della sequenza
-            giocoSequenza.add(nuovoIndiceCasuale)
-
-            val letter = colorNames[nuovoIndiceCasuale]
-            sequenzaTotale = if (sequenzaTotale.isEmpty()) letter else "$sequenzaTotale, $letter"
-            // Sequenza totale che verrà passata a ListaPartite
-            // Tempo che intercorre tra la rimozione della stringa di testo non editabile e la prima lettera della sequenza proposta dal PC
-            // (è anche il tempo che l'utente deve aspettare per vedere la prima lettera generata casualmente dal PC dopo avere cliccato AVVIA PARTITA)
+            // Il PC dopo che l'area di testo è stata cancellata aspetta altri 800ms in modo tale da dare sufficiente
+            // tempo all'utente per capire che sta per iniziare la nuova sequenza generata dal PC
+            // (Quindi dal momento in cui l'utente preme l'ultimo bottone al momento in cui inizia una nuova sequenza passano 1200ms + 800ms = 2 secondi)
             delay(800)
 
             // Il PC fa lampeggiare tutta la sequenza aggiornata
@@ -389,6 +444,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
                 bottoneIlluminato = -1
                 containerColorArgb = initialColor.toArgb()
+                // Pausa tra il lampeggio di un bottone e il successivo
                 delay(250)
             }
 
