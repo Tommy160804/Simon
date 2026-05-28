@@ -17,3 +17,4 @@ Altre note;
 - Per tornare allo schermo 1 si può usare equivalentemente il bottone "Nuova sequenza" oppure il tasto back.
 - Nello schermo 2 è stato usato il componente Card di Material3 per migliorare la grafica della lista.
 - L'icona dell'app è stata creata con l'AI.
+- Le frequenze della classe gestioneSuoni.kt sono state generate dall'AI.
