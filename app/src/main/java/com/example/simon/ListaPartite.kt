@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -85,7 +84,7 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteCo
                 MatchItem(
                     sequenza = sequenza,
                     sequenza1 = sequenzaCompleta,
-                    onClick = { onMatchClick(sequenza, sequenzaCompleta) }
+                    onClick = { onMatchClick(sequenza, sequenzaCompleta) },
                 )
             }
         }
@@ -125,25 +124,24 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteCo
 fun MatchItem(sequenza: String, sequenza1: String, onClick: () -> Unit) {
     val textDarkGray = colorResource(id = R.color.dark_gray)
 
+
     // Calcola il numero di elementi della stringa
-    // Lascio l'if/else per sicurezza ma in teoria non dovrebbe mai essere 0 la sequenza
-    // Vi è il -1 perchè la sequenza indovinata sarà sempre pari alla sequenza totale proposta dal PC -1 in quanto l'ultimo elemento sarà errato
-    // (altrimenti la partita continuerebbe all'infinito senza errori da parte del giocatore)
-    val conteggio = if (sequenza1.isEmpty()) 0 else {(sequenza1.split(", ").size - 1)}
+    val conteggio = if (sequenza1.isEmpty()) 0 else {(sequenza1.split(", ").size )}
+
+    // Calcola il numero di elementi della stringa corretta
+    val conteggio0 = if (sequenza.isEmpty()) 0 else {(sequenza.split(", ").size )}
 
     // Trasformo la stringa di bottoni corretti premuti dal'utente (nell'ultimo giro, cioè quello in cui sbaglia) nel formato con la virgola
-    // L'ultimo elemento che l'utente schiaccia è sicuramente errato perciò lo rimuovo
-    val elementiSenzaErrore = sequenza.split(", ").dropLast(1)
+    val elementiSenzaErrore = if(conteggio0 != 0) sequenza.split(", ") else emptyList()
 
     // Aggiungo ", " alla fine solo se la lista contiene almeno un elemento indovinato
-    val sequenzaCorretta = if (elementiSenzaErrore.isNotEmpty()) {
+    val parteVerde = if (elementiSenzaErrore.isNotEmpty()) {
         elementiSenzaErrore.joinToString(", ") + ", "
     } else {
         ""
     }
-
     // Sequenza che nell'ultimo giro non è stata indovinata dall'utente
-    val sequenzaRimanente = sequenza1.removePrefix(sequenzaCorretta)
+    val parteRossa = sequenza1.removePrefix(parteVerde)
 
     // Card serve per migliorare l'aspetto della lista;
     // di base crea uno sfondo arrotondato (di colore bianco) per ogni elemento della lista
@@ -164,7 +162,7 @@ fun MatchItem(sequenza: String, sequenza1: String, onClick: () -> Unit) {
         ) {
             // Sinistra --> Numero rettangoli
             Text(
-                text = stringResource(id = R.string.punti, conteggio),
+                text = stringResource(id = R.string.punti, (conteggio - 1)),
                 fontWeight = FontWeight.Bold,
                 color = textDarkGray,
                 // 30% dello schermo per la parte sinistra
@@ -181,11 +179,11 @@ fun MatchItem(sequenza: String, sequenza1: String, onClick: () -> Unit) {
                         fontWeight = FontWeight.Bold
                     )
                     ) {
-                        append(sequenzaCorretta)
+                        append(parteVerde)
                     }
                     // Rossa la sequenza rimanente/errore
                     withStyle(style = SpanStyle(color = colorResource(R.color.red), fontWeight = FontWeight.Bold)) {
-                        append(sequenzaRimanente)
+                        append(parteRossa)
                     }
                 },
                 // Occupa il 70% dello schermo rimanente

@@ -17,6 +17,13 @@ import com.example.simon.ui.theme.SimonTheme
 import androidx.compose.runtime.collectAsState
 import androidx.activity.viewModels
 import androidx.compose.runtime.remember
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.unit.dp
 
 
 class MainActivity : ComponentActivity() {
@@ -47,17 +54,62 @@ class MainActivity : ComponentActivity() {
                 var selectedSequence by rememberSaveable { mutableStateOf("") }
                 var selectedCompleteSequence by rememberSaveable { mutableStateOf("") }
 
+                // Variabile booleana per gestire il pop-up
+                var popUp by rememberSaveable { mutableStateOf(false) }
+
                 Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
+                    // Se il flag è vero il pop-up si sovrappone a SchermataGioco
+                    if (popUp) {
+                        Dialog(
+                            // Gestione tasto back
+                            onDismissRequest = {
+                                popUp = false
+                                currentScreen = 2
+                            },
+                            properties = DialogProperties(
+                                dismissOnBackPress = true,
+                                // Se schiaccio qualcosa fuori dal pop up non succede nulla
+                                dismissOnClickOutside = false
+                            )
+                        ) {
+                            // Riutilizzo DettaglioPartita per il pop up, modificandolo leggermente
+                            DettaglioPartita(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.95f)
+                                    .height(600.dp)
+                                    .clip(RoundedCornerShape(16.dp)),
+                                sequenzaUtente = selectedSequence,
+                                sequenzaCorretta = selectedCompleteSequence,
+                                // Gestione caso giocatore che preme il FAB del pop-up
+                                onBackToList = {
+                                    popUp = false
+                                    currentScreen = 2
+                                }
+                            )
+                        }
+                    }
+
                     when (currentScreen) {
                         1 -> SchermataGioco(
                             modifier = Modifier.padding(innerPadding),
-                            onNavigateToSecondScreen = { nuovaSequenza, nuovaSequenzaCompleta->
+                            onNavigateToSecondScreen = { nuovaSequenza, nuovaSequenzaCompleta, causaUscita ->
                                 // Questo if serve per gestire il caso limite in cui l'utente preme Avvia Partita e subito dopo preme Fine Partita
                                 if (nuovaSequenzaCompleta.isNotEmpty()) {
                                     // Salvo la partita nel DB
                                     viewModel.salvaPartita(nuovaSequenza, nuovaSequenzaCompleta)
                                 }
-                                currentScreen = 2
+
+                                // Se il gioco finisce perchè il giocatore ha premuto un tasto errato,
+                                // allora mostro il pop-up sopra SchermataGioco
+                                if (causaUscita == "errore") {
+                                    selectedSequence = nuovaSequenza
+                                    selectedCompleteSequence = nuovaSequenzaCompleta
+                                    popUp = true
+                                }
+                                // Se invece il giocatore ha schiacciato il tasto back oppure Fine Partita vado direttamente alla schermata Gioco
+                                else {
+                                    currentScreen = 2
+                                }
                             },
                             onBack = { currentScreen = 2 }
                         )
@@ -70,7 +122,7 @@ class MainActivity : ComponentActivity() {
                             onMatchClick = { sequenza, sequenzaCompleta ->
                                 selectedSequence = sequenza
                                 selectedCompleteSequence = sequenzaCompleta
-                                currentScreen = 3
+                                currentScreen = 3 // Per la cronologia normale usiamo ancora la schermata intera
                             }
                         )
                         3 -> DettaglioPartita(
@@ -85,12 +137,3 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
-/*
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    SimonTheme {
-    }
-}
-*/

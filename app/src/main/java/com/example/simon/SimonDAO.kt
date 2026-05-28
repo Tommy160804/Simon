@@ -17,8 +17,4 @@ interface SimonDAO {
     @Query("SELECT * FROM tabella_partite ORDER BY dataPartita DESC")
     fun getPartite(): Flow<List<SimonEntity>>
 
-    // Dovrò creare uno spazio apposito in ListaPartite.kt
-    // Prendo il punteggio più alto in assoluto mai registrato
-    @Query("SELECT MAX(punteggio) FROM tabella_partite")
-    fun getHighest(): Flow<Int?>
 }

@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.content.res.Configuration
 import androidx.activity.compose.BackHandler
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.runtime.LaunchedEffect
@@ -49,8 +48,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import kotlinx.coroutines.launch
 
 @Composable
-fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String, String) -> Unit, onBack: () -> Unit) {
-    BackHandler { onBack() }
+fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (String, String, String) -> Unit, onBack: () -> Unit) {
 
     // Lista dei 6 colori per i bottoni
     val colors = listOf(colorResource(id = R.color.red), colorResource(id = R.color.green), colorResource(id = R.color.blue), colorResource(id = R.color.magenta), colorResource(id = R.color.yellow), colorResource(id = R.color.cyan))
@@ -107,7 +105,10 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
     // Inizializzazione del gestore dei suoni generati via codice
     val soundManager = remember { SoundManager() }
 
-    // Attiviamo il flag di rotazione solo se la partita è effettivamente in corso
+    // Variabile che serve a sapere se il giocatore ha premuto Pausa
+    var inPausa by rememberSaveable { mutableStateOf(false) }
+
+    // Attivo il flag solo se la partita è in corso
     LaunchedEffect(isLandscape) {
         if (statoPartita) {
             inRotazione = true
@@ -116,6 +117,37 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
     // Memorizza il lavoro attualmente in corso
     var lampeggioUtente by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
+
+    // Gestione tasto back
+    BackHandler {
+        // Se la partita è in corso il tasto back si comporta come il bottone FINE PARTITA
+        if (statoPartita) {
+            statoPartita = false
+            val stringaDaPassare = sequenceText
+
+            // Se giocoSequenza.size è 1 e il turnoPC è ancora true,
+            // significa che il PC sta ancora facendo il primissimo lampeggio.
+            val primaSequenza = (giocoSequenza.size == 1) && turnoPC
+
+            // Salva solo se la lista non è vuota E se il PC ha finito di lampeggiare (primaSequenza è false)
+            val stringaDaPassare1 = if (giocoSequenza.isNotEmpty() && !primaSequenza) {
+                sequenzaTotale
+            } else {
+                ""
+            }
+
+            sequenceText = ""
+            sequenzaTotale = ""
+            giocoSequenza.clear()
+            utenteIndiceCorrente = 0
+            indiceCorrentePC = 0
+
+            onNavigateToSecondScreen(stringaDaPassare, stringaDaPassare1, "fine")
+        } else {
+            // Torno a Lista Partite senza fare niente se la partita non è ancora iniziata
+            onBack()
+        }
+    }
 
     /*
     * Definizione delle 3 funzioni lambda;
@@ -236,7 +268,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                                     giocoSequenza.clear()
                                     utenteIndiceCorrente = 0
                                     indiceCorrentePC = 0
-                                    onNavigateToSecondScreen(stringaFinale, stringaFinale1)
+                                    onNavigateToSecondScreen(stringaFinale, stringaFinale1, "errore")
                                 }
                             }
                         },
@@ -295,7 +327,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         containerColor = gray11,
                         disabledContainerColor = initialColor,
                         contentColor = Color.White,
-                        disabledContentColor = textDarkGray
+                        disabledContentColor = gray11
                     ),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
@@ -319,17 +351,28 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 }
                 Button(
                     onClick = {
+                        inPausa = !inPausa
                     },
-                    colors = ButtonDefaults.buttonColors(containerColor = gray11),
+                    enabled = turnoPC,
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (inPausa) Color.Red.copy(0.7f) else gray11,
+                        disabledContainerColor = initialColor,
+                        contentColor = Color.White,
+                        disabledContentColor = gray11
+                    ),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
                         .weight(1f)
                         .height(64.dp)
-                        .border(1.dp, textDarkGray, RoundedCornerShape(8.dp))
+                        .border(
+                            width = 1.dp,
+                            color = if (inPausa) textDarkGray else textDarkGray.copy(alpha = 0.35f),
+                            shape = RoundedCornerShape(8.dp)
+                        )
                 ) {
-                    Text(text = "PAUSA",
-                        color = Color.White,
-                        fontSize = 14.sp,
+                    Text(text = if (inPausa) "RIPRENDI" else "PAUSA",
+                        // Soluzione per fare stare RIPRENDI in una sola riga
+                        fontSize = if(inPausa) 13.sp else 14.sp,
                         fontWeight = FontWeight.Bold,
                         // Centra il testo orizzontalmente
                         textAlign = TextAlign.Center,
@@ -360,7 +403,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         utenteIndiceCorrente = 0
                         indiceCorrentePC = 0
 
-                        onNavigateToSecondScreen(stringaDaPassare, stringaDaPassare1)
+                        onNavigateToSecondScreen(stringaDaPassare, stringaDaPassare1, "fine")
                     },
                     // Il pulsante è attivo solo se la partita è in corso (cioè dopo avere premuto AVVIA PARTITA)
                     enabled = statoPartita,
@@ -369,7 +412,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         containerColor = gray11,
                         disabledContainerColor = initialColor,
                         contentColor = Color.White,
-                        disabledContentColor = textDarkGray
+                        disabledContentColor = gray11
                     ),
                     shape = RoundedCornerShape(8.dp),
                     modifier = Modifier
@@ -469,6 +512,12 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             // .drop(IndiceCorrentePC) permette di saltare i bottoni che erano stati riprodotti prima della rotazione dello schermo;
             // altrimenti se il PC sta eseguendo una sequenza e il giocatore gira lo schermo, la riproduzione della sequenza ricomincia da capo
             for (indice in giocoSequenza.drop(indiceCorrentePC)) {
+                // Se l'utente preme Pausa, la coroutines rimane in attesa (e non blocca il resto dell'app)
+                while (inPausa) {
+                    // La coroutine controlla ogni 100ms se è stato schiacciato RIPRENDI o meno
+                    delay(100)
+                }
+
                 bottoneIlluminato = indice
 
                 soundManager.suonoBottone(indice)
@@ -486,6 +535,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             // Azzero l'indice del PC per il round successivo
             indiceCorrentePC = 0
             turnoPC = false
+            inPausa = false
         }
     }
 }
