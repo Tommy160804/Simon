@@ -85,10 +85,8 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
     var sequenzaTotale by rememberSaveable { mutableStateOf("") }
 
-    // Gestisce lo stato dello scorrimento verticale per l'area di testo
     val scrollState = rememberScrollState()
 
-    // Variabile booleana per lo stato del gioco: 'true' se la partita è in corso
     var statoPartita by rememberSaveable { mutableStateOf(false) }
 
     // Salva la sequenza del PC in modo che sopravviva alla rotazione e al background
@@ -99,7 +97,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
         )
     ) { mutableStateListOf<Int>() }
 
-    // Tiene traccia dell'indice del bottone attualmente "illuminato"
+    // Tiene traccia dell'indice del bottone attualmente illuminato
     var bottoneIlluminato by rememberSaveable { mutableIntStateOf(-1) }
 
     // Variabile che indica se è o meno il turno del PC
@@ -110,7 +108,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
     // Variabili necessarie per salvare il punto in cui si trova la sequenza generata dal PC o dall'utente
     var indiceCorrentePC by rememberSaveable { mutableIntStateOf(0) }
-    var utenteIndiceCorrente by rememberSaveable { mutableIntStateOf(0) }
+    var indiceCorrenteUtente by rememberSaveable { mutableIntStateOf(0) }
 
     val isLandscape = LocalConfiguration.current.orientation == Configuration.ORIENTATION_LANDSCAPE
 
@@ -120,16 +118,14 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
     // Inizializzazione del gestore dei suoni generati via codice
     val soundManager = remember { SoundManager() }
 
-    // Variabile che serve a sapere se il giocatore ha premuto Pausa
     var inPausa by rememberSaveable { mutableStateOf(false) }
 
-    // Memorizza il lavoro attualmente in corso
+    // Memorizza il job attualmente in corso
     var lampeggioUtente by remember { mutableStateOf<kotlinx.coroutines.Job?>(null) }
 
     // Flag per ripristinare il turno del giocatore dopo la terminazione forzata del processo
     var turnoBackground by rememberSaveable { mutableStateOf(false) }
 
-    // Gestione tasto back
     BackHandler {
         // Se la partita è in corso il tasto back si comporta come il bottone FINE PARTITA
         if (statoPartita) {
@@ -150,7 +146,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             sequenceText = ""
             sequenzaTotale = ""
             giocoSequenza.clear()
-            utenteIndiceCorrente = 0
+            indiceCorrenteUtente = 0
             indiceCorrentePC = 0
             turnoBackground = false
 
@@ -191,7 +187,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             Text(
                 text = sequenceText,
                 fontSize = 24.sp,
-                // Testo in grassetto
                 fontWeight = FontWeight.Bold,
                 color = textDarkGray,
                 lineHeight = 30.sp
@@ -242,9 +237,8 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                                 // Se l'app era appena tornata dal background, al primo click dell'utente togliamo il flag di "salvato"
                                 turnoBackground = false
 
-                                if (index == giocoSequenza[utenteIndiceCorrente]) {
+                                if (index == giocoSequenza[indiceCorrenteUtente]) {
                                     val letter = colorNames[index]
-                                    // Aggiorno la stringa di testo
                                     sequenceText = if (sequenceText.isEmpty()) letter else "$sequenceText, $letter"
                                     // Interrompo il lampeggio precedente (se è ancora attivo)
                                     lampeggioUtente?.cancel()
@@ -260,12 +254,12 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                                         bottoneIlluminato = -1
                                     }
 
-                                    utenteIndiceCorrente++
+                                    indiceCorrenteUtente++
 
-                                    // Questo if viene eseguito se l'utente ha digitato l'intera sequenza corretta;
+                                    // Questo if viene eseguito si l'utente ha digitato l'intera sequenza corretta;
                                     // quindi è finita la sequenza del giocatore e tocca di nuovo al PC
-                                    if (utenteIndiceCorrente == giocoSequenza.size) {
-                                        utenteIndiceCorrente = 0
+                                    if (indiceCorrenteUtente == giocoSequenza.size) {
+                                        indiceCorrenteUtente = 0
                                         indiceCorrentePC = 0
                                         turnoPC = true
                                     }
@@ -279,7 +273,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                                     val stringaFinale1 = sequenzaTotale
                                     sequenceText = ""
                                     giocoSequenza.clear()
-                                    utenteIndiceCorrente = 0
+                                    indiceCorrenteUtente = 0
                                     indiceCorrentePC = 0
                                     turnoBackground = false
                                     onNavigateToSecondScreen(stringaFinale, stringaFinale1, MotivoUscita.ERRORE)
@@ -324,7 +318,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 .padding(12.dp)
         ) {
             // Se l'app subisce una terminazione forzata durante il turno del giocatore, attivo il flag al riavvio per mantenere i progressi
-            if (statoPartita && !turnoPC && sequenceText.isNotEmpty() && utenteIndiceCorrente > 0) {
+            if (statoPartita && !turnoPC && sequenceText.isNotEmpty() && indiceCorrenteUtente > 0) {
                 LaunchedEffect(Unit) {
                     turnoBackground = true
                 }
@@ -339,7 +333,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         statoPartita = true
                         sequenceText = ""
                         giocoSequenza.clear()
-                        utenteIndiceCorrente = 0
+                        indiceCorrenteUtente = 0
                         indiceCorrentePC = 0
                         turnoPC = true
                         turnoBackground = false
@@ -366,7 +360,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                     Text(
                         text = stringResource(id = R.string.avvia_partita),
                         fontWeight = FontWeight.Bold,
-                        // Centra il testo orizzontalmente
                         textAlign = TextAlign.Center,
                         // Spazio verticale tra la prima e la seconda riga
                         lineHeight = 18.sp
@@ -400,7 +393,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         // Soluzione per fare stare RIPRENDI in una sola riga
                         fontSize = if (inPausa) 13.sp else 14.sp,
                         fontWeight = FontWeight.Bold,
-                        // Centra il testo orizzontalmente
                         textAlign = TextAlign.Center,
                         // Spazio verticale tra la prima e la seconda riga (Nel caso altre lingue andassero a capo)
                         lineHeight = 18.sp
@@ -426,7 +418,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         sequenceText = ""
                         sequenzaTotale = ""
                         giocoSequenza.clear()
-                        utenteIndiceCorrente = 0
+                        indiceCorrenteUtente = 0
                         indiceCorrentePC = 0
                         turnoBackground = false
 
@@ -456,7 +448,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                         text = stringResource(id = R.string.fine_partita),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Bold,
-                        // Centra il testo orizzontalmente
                         textAlign = TextAlign.Center,
                         // Spazio verticale tra la prima e la seconda riga
                         lineHeight = 18.sp
@@ -470,7 +461,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
     * if/else che permettono di scegliere il layout corretto in base all'orientamento
     * */
     if (isLandscape) {
-        // Modalità landscape;
         // .weight(1f) sia alla matrice che alla colonna a dx; così facendo entrambi occupano metà schermo
         Row(
             modifier = Modifier
@@ -488,7 +478,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             }
         }
     } else {
-        // Modalità portrait
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -529,7 +518,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 delay(1200)
             }
 
-            // Consumiamo i flag temporanei
             inRotazione = false
             turnoBackground = false
 
@@ -541,14 +529,17 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
             // (Quindi dal momento in cui l'utente preme l'ultimo bottone al momento in cui inizia una nuova sequenza passano 1200ms + 800ms = 2 secondi)
             delay(800)
 
-            // .drop(IndiceCorrentePC) permette di saltare i bottoni che erano stati riprodotti prima della rotazione dello schermo;
-            // altrimenti se il PC sta eseguendo una sequenza e il giocatore gira lo schermo, la riproduzione della sequenza ricomincia da capo
-            for (indice in giocoSequenza.drop(indiceCorrentePC)) {
-                // Se l'utente preme Pausa, la coroutines rimane in attesa (e non blocca il resto dell'app)
+            val daSaltare = indiceCorrentePC
+            for (i in daSaltare until giocoSequenza.size) {
+                val indice = giocoSequenza[i]
+
                 while (inPausa) {
                     // La coroutine controlla ogni 100ms se è stato schiacciato RIPRENDI o meno
                     delay(100)
                 }
+
+                // Salvo subito in modo che se il giocatore ruota lo schermo è salvato
+                indiceCorrentePC = i + 1
 
                 bottoneIlluminato = indice
                 soundManager.suonoBottone(indice)
@@ -556,9 +547,6 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                 bottoneIlluminato = -1
                 // Pausa tra il lampeggio di un bottone e il successivo
                 delay(250)
-
-                // Incremento ogni volta che un bottone generato dal PC lampeggia
-                indiceCorrentePC++
             }
 
             // Azzero l'indice del PC per il round successivo

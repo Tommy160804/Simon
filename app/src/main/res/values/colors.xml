@@ -9,6 +9,6 @@
     <color name="gray">#D3D3D3</color>
     <color name="dark_gray">#444444</color>
     <color name="gray1">#888888</color>
-    <color name="white1">#FFFFFF</color>
+    <color name="white">#FFFFFF</color>
     <color name="dark_green">#4CAF50</color>
 </resources>

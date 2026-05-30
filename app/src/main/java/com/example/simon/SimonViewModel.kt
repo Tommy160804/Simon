@@ -24,7 +24,6 @@ class SimonViewModel(application: Application) : AndroidViewModel(application) {
     fun salvaPartita(sequenzaUtente: String, sequenzaPC: String) {
         if (sequenzaPC.isNotEmpty()) {
             val elementi = sequenzaPC.split(", ")
-            // -1 perché l'ultimo colore della sequenza PC non è stato indovinato
             val punti = elementi.size - 1
 
 
