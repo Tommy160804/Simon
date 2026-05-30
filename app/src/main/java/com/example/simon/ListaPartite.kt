@@ -15,7 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -23,7 +23,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -35,11 +34,12 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteComplete: List<String>, newGame: () -> Unit, onMatchClick: (String, String) -> Unit) {
+fun ListaPartite(modifier: Modifier = Modifier, partite: List<SimonEntity>, newGame: () -> Unit, onMatchClick: (String, String) -> Unit) {
 
     val initialColor = colorResource(id = R.color.gray)
     val textDarkGray = colorResource(id = R.color.dark_gray)
     val gray11 = colorResource(id = R.color.gray1)
+    val white = colorResource(id = R.color.white)
 
 
     // I due box e la lista devono essere in colonna sia in modalità portrait che in modalità landscape
@@ -79,12 +79,12 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteCo
         ) {
 
             // MatchItem crea un elemento della lista per ogni partita completata
-            itemsIndexed(partite) { index, sequenza ->
-                val sequenzaCompleta = partiteComplete[index]
+            items(partite) { partita ->
                 MatchItem(
-                    sequenza = sequenza,
-                    sequenza1 = sequenzaCompleta,
-                    onClick = { onMatchClick(sequenza, sequenzaCompleta) },
+                    punteggio = partita.punteggio,
+                    sequenza = partita.sequenzaUtente,
+                    sequenza1 = partita.sequenzaCorretta,
+                    onClick = { onMatchClick(partita.sequenzaUtente, partita.sequenzaCorretta) },
                 )
             }
         }
@@ -110,7 +110,7 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteCo
             ) {
                 Text(
                     text = stringResource(id = R.string.nuova_sequenza),
-                    color = Color.White,
+                    color = white,
                     fontWeight = FontWeight.Bold
                 )
             }
@@ -121,12 +121,11 @@ fun ListaPartite(modifier: Modifier = Modifier, partite: List<String>, partiteCo
 @Composable
 // MatchItem definisce l'aspetto grafico e il comportamento di una singola riga della lista
 // Ho aggiunto il parametro onClick per gestire la pressione del componente da parte dell'utente
-fun MatchItem(sequenza: String, sequenza1: String, onClick: () -> Unit) {
+fun MatchItem(punteggio: Int, sequenza: String, sequenza1: String, onClick: () -> Unit) {
     val textDarkGray = colorResource(id = R.color.dark_gray)
+    val darkGreen = colorResource(id = R.color.dark_green)
+    val red = colorResource(id = R.color.red)
 
-
-    // Calcola il numero di elementi della stringa
-    val conteggio = if (sequenza1.isEmpty()) 0 else {(sequenza1.split(", ").size )}
 
     // Calcola il numero di elementi della stringa corretta
     val conteggio0 = if (sequenza.isEmpty()) 0 else {(sequenza.split(", ").size )}
@@ -162,7 +161,7 @@ fun MatchItem(sequenza: String, sequenza1: String, onClick: () -> Unit) {
         ) {
             // Sinistra --> Numero rettangoli
             Text(
-                text = stringResource(id = R.string.punti, (conteggio - 1)),
+                text = stringResource(id = R.string.punti, punteggio),
                 fontWeight = FontWeight.Bold,
                 color = textDarkGray,
                 // 30% dello schermo per la parte sinistra
@@ -175,14 +174,14 @@ fun MatchItem(sequenza: String, sequenza1: String, onClick: () -> Unit) {
                 text = buildAnnotatedString {
                     // Verde la sequenza corretta
                     withStyle(style = SpanStyle(
-                        color = colorResource(R.color.dark_green),
+                        color = darkGreen,
                         fontWeight = FontWeight.Bold
                     )
                     ) {
                         append(parteVerde)
                     }
                     // Rossa la sequenza rimanente/errore
-                    withStyle(style = SpanStyle(color = colorResource(R.color.red), fontWeight = FontWeight.Bold)) {
+                    withStyle(style = SpanStyle(color = red, fontWeight = FontWeight.Bold)) {
                         append(parteRossa)
                     }
                 },

@@ -11,9 +11,7 @@ interface SimonDAO {
     @Insert
     suspend fun inserisciPartita(partita: SimonEntity)
 
-    // Uso StateFlow al posto di Flow in quanto StateFlow permette al giocatore di vedere immediatamente
-    // in Lista Partite la partita appena conclusa.
-    // Prende tutte le partite, ordinate dalla più recente alla più vecchia
+    // Restituisce la cronologia delle partite ordinate dalla più recente alla più vecchia.
     @Query("SELECT * FROM tabella_partite ORDER BY dataPartita DESC")
     fun getPartite(): Flow<List<SimonEntity>>
 

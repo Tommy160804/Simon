@@ -17,7 +17,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -54,8 +53,12 @@ fun DettaglioPartita(modifier: Modifier = Modifier, sequenzaUtente: String, sequ
     // Intercetta il tasto back fisico del telefono per tornare alla lista
     BackHandler { onBackToList() }
 
+    val white = colorResource(id = R.color.white)
+    val red = colorResource(id = R.color.red)
     val initialColor = colorResource(id = R.color.gray)
     val textDarkGray = colorResource(id = R.color.dark_gray)
+    val darkGreen = colorResource(id = R.color.dark_green)
+
     // Calcola il numero di elementi (stessa logica presente in ListaPartite.kt)
     val conteggio = if (sequenzaCorretta.isEmpty()) 0 else { sequenzaCorretta.split(", ").size }
     val conteggio0 = if (sequenzaUtente.isEmpty()) 0 else { sequenzaUtente.split(", ").size }
@@ -94,7 +97,7 @@ fun DettaglioPartita(modifier: Modifier = Modifier, sequenzaUtente: String, sequ
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "Dettaglio Partita",
+                    text = stringResource(id = R.string.dettaglio_partita),
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
                     color = textDarkGray
@@ -151,13 +154,13 @@ fun DettaglioPartita(modifier: Modifier = Modifier, sequenzaUtente: String, sequ
                         Text(
                             text = buildAnnotatedString {
                                 withStyle(style = SpanStyle(
-                                    color = colorResource(R.color.dark_green),
+                                    color = darkGreen,
                                     fontWeight = FontWeight.Bold
                                 )) {
                                     append(parteVerde)
                                 }
                                 withStyle(style = SpanStyle(
-                                    color = colorResource(R.color.red),
+                                    color = red,
                                     fontWeight = FontWeight.Bold
                                 )
                                 ) {
@@ -179,8 +182,8 @@ fun DettaglioPartita(modifier: Modifier = Modifier, sequenzaUtente: String, sequ
                     onClick = onBackToList,
                     shape = CircleShape,
                     // Rosso sfumato 0.6; rosso normale è troppo "forte"
-                    containerColor = Color.Red.copy(alpha = 0.6f),
-                    contentColor = Color.White,
+                    containerColor = red.copy(alpha = 0.6f),
+                    contentColor = white,
                     // Sfumando il colore si vede un'ombra; la tolgo
                     elevation = FloatingActionButtonDefaults.elevation(
                         defaultElevation = 0.dp,

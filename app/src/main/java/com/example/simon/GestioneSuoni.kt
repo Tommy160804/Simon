@@ -18,10 +18,8 @@ class SoundManager {
     // Frequenze in Hz associate ai 6 bottoni di gioco
     private val frequenze = doubleArrayOf(415.30, 311.13, 246.94, 209.30, 164.81, 130.81)
 
-    // Frequenza per l'errore
     private val frequenzaErrore = 80.0
 
-    // Frequenza di campionamento standard
     private val sampleRate = 44100
 
     // Uso AudioTrack il quale accetta un flusso continuo di byte.
@@ -32,7 +30,6 @@ class SoundManager {
     private val audioLock = Any()
 
     init {
-        // Questo blocco try/catch gestisce l'avvio del sistema audio all'accensione dell'app, evitando crash
         try {
             // Calcola la dimensione minima del buffer hardware richiesta dal sistema operativo Android per non fare saltare l'audio
             val minBufferSize = AudioTrack.getMinBufferSize(
@@ -93,23 +90,19 @@ class SoundManager {
         }
     }
 
-    // Funzione che serve a riprodurre il suono di uno dei bottoni della matrice di colori
     fun suonoBottone(buttonIndex: Int) {
-            generatoreOnda(frequenze[buttonIndex], durataMs = 300, isError = false)
+            generatoreOnda(frequenze[buttonIndex],300,false)
     }
 
-    // Funzione che serve a riprodurre il suono dell'errore
     fun suonoErrore() {
-        generatoreOnda(frequenzaErrore, 600, isError = true)
+        generatoreOnda(frequenzaErrore,600,true)
     }
 
     // OSS; Per scrivere questa funzione mi sono aiutato con l'AI; mi ha consigliato di sfumare il suono dei bottoni e mi ha consigliato le formule per le onde
-
-    // Funzione che genera l'onda e la scrive nel buffer (la metto private perchè la uso solo in questo file)
     private fun generatoreOnda(frequency: Double, durataMs: Int, isError: Boolean) {
         // Generazione matematica dell'audio in un thread; il thread viene eseguito in background per non bloccare l'app
         thread {
-            // Calcolo il numero totale di campioni necessari per coprire la durata in millisecondi richiesta
+            // Calcolo il numero totale di campioni necessari per coprire la durata in millisecondi
             // OSS; Se la durata è un 1s allora numero di campioni è esattamente sampleRate (ovvero 44100 campioni in un secondo)
             val numCampioni = (durataMs * sampleRate / 1000)
 
@@ -140,14 +133,13 @@ class SoundManager {
 
             var indice = 0
             // Converte i valori nell'equivalente formato intero a 16-bit
-            for (dVal in sample) {
-                val valShort = (dVal * 32767).toInt() // normalizzazione a 16 bit
+            for (i in sample) {
+                val valShort = (i * 32767).toInt() // normalizzazione a 16 bit
                 // Spezzo il valore short a 16 bit in 2 byte (formato Little Endian per AudioTrack)
                 datiSuono[indice++] = (valShort and 0x00ff).toByte()
                 datiSuono[indice++] = ((valShort and 0xff00) ushr 8).toByte()
             }
 
-            // Blocco try/catch per prevenire che eventuali errori nella generazione dell'audio che portano al crash dell'app
             try {
                 // audioTrack è una risorsa condivisa, perciò è necessario gestire la concorrenza
                 synchronized(audioLock) {
