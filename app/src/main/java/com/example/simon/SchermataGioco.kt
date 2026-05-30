@@ -80,7 +80,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
     val gray11 = colorResource(id = R.color.gray1)
 
 
-    // Memorizza la stringa di testo che mostra a schermo la cronologia dei colori premuti dall'utente nel round attuale
+    // Memorizza la stringa di testo che mostra a schermo la cronologia dei colori premuti dall'utente nel round attuale.
     var sequenceText by rememberSaveable { mutableStateOf("") }
 
     var sequenzaTotale by rememberSaveable { mutableStateOf("") }
@@ -152,7 +152,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
 
             onNavigateToSecondScreen(stringaDaPassare, stringaDaPassare1, MotivoUscita.FINE)
         } else {
-            // Torno a Lista Partite senza fare niente se la partita non è ancora iniziata
+            // Torno semplicemente a Lista Partite se la partita non è ancora iniziata
             onBack()
         }
     }
@@ -168,11 +168,11 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
     val displayBox = @Composable { boxModifier: Modifier ->
         Box(
             modifier = boxModifier
-                // Padding necessario affinché la box non sia attaccata al bordo del telefono
+                // Padding necessario affinché la box non sia attaccata al bordo del telefono.
                 .padding(16.dp)
                 .border(2.dp, textDarkGray, RoundedCornerShape(8.dp))
                 .background(initialColor, RoundedCornerShape(8.dp))
-                // Padding necessario affinché le lettere non siano attaccate al bordo della box
+                // Padding necessario affinché le lettere non siano attaccate al bordo della box.
                 .padding(8.dp)
                 /*
                 * Questa riga di codice permette di gestire la lista nel momento in cui diventa molto lunga.
@@ -234,7 +234,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                             * --> Il gioco non deve essere nella fase di riproduzione della sua sequenza
                             * */
                             if (statoPartita && !turnoPC) {
-                                // Se l'app era appena tornata dal background, al primo click dell'utente togliamo il flag di "salvato"
+                                // Se l'app è appena tornata dal background, al primo click dell'utente tolgo il flag di "salvato"
                                 turnoBackground = false
 
                                 if (index == giocoSequenza[indiceCorrenteUtente]) {
@@ -257,7 +257,7 @@ fun SchermataGioco(modifier: Modifier = Modifier, onNavigateToSecondScreen: (Str
                                     indiceCorrenteUtente++
 
                                     // Questo if viene eseguito si l'utente ha digitato l'intera sequenza corretta;
-                                    // quindi è finita la sequenza del giocatore e tocca di nuovo al PC
+                                    // quindi è finita la sequenza del giocatore e tocca di nuovo al PC.
                                     if (indiceCorrenteUtente == giocoSequenza.size) {
                                         indiceCorrenteUtente = 0
                                         indiceCorrentePC = 0
